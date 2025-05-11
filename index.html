@@ -1,16 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="styles.css" />
-    <script src="./script.js" defer></script>
-    <title>PuppyBowl</title>
-  </head>
-  <body>
-    <h1>Welcome to Puppy Bowl!</h1>
-    <!--Don't be afraid to add stuff to your HTML as needed!-->
-    
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Puppy Bowl</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+</head>
+<body>
+  <h1>Welcome to Puppy Bowl!</h1>
+
+  <div class="formContainer">
+    <form id="addPuppyForm">
+      <div class="soloRow1">
+      <input name="name" placeholder="Name" required />
+      <input name="breed" placeholder="Breed" required />
+      <input name="imageUrl" placeholder="Image URL" required />
+      <input name="teamId" placeholder="Team ID (optional)" />
+      </div>
+      <div class="soloRow1">
+      <h2>Status:</h2>
+      <label><input type="radio" name="status" value="field" checked /> On Field</label>
+      <label><input type="radio" name="status" value="bench" id="bench" /> On Bench</label>
+      </div>
+      <button type="submit">Add Puppy</button>
+    </form>
+  </div>
+
+  <div id="puppiesList"></div>
+
+  <script src="script.js"></script>
+</body>
 </html>

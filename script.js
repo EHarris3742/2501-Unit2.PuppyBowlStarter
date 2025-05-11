@@ -1,142 +1,208 @@
-//If you would like to, you can create a variable to store the API_URL here.
-//This is optional. if you do not want to, skip this and move on.
+// API URL
+const API_URL = "https://fsa-puppy-bowl.herokuapp.com/api/2501-ftb-et-web-am-PUPPIES/players"
 
+// Global variables
+let puppies = [] 
+const puppiesListDiv = document.querySelector("#puppiesList")
+const addPuppyForm = document.querySelector("#addPuppyForm")
 
-/////////////////////////////
-/*This looks like a good place to declare any state or global variables you might need*/
+// Handles hash routing
+window.addEventListener("hashchange", () => {
+  render()
+})
 
-////////////////////////////
-
-
-
-/**
- * Fetches all players from the API.
- * This function should not be doing any rendering
- * @returns {Object[]} the array of player objects
- */
+//  Fetches all players from the API.
 const fetchAllPlayers = async () => {
-  //TODO
+  try {
+    const response = await fetch(API_URL)
+    const data = await response.json()
+    puppies = data.data.players
 
-};
+    // Sanitize player names to support URL routing
+    for (let i = 0; i < puppies.length; i++) {
+      const dog = puppies[i]
+      const dogName = dog.name
+      if (dogName.indexOf(" ") >= 0) {
+        const newDogName = dogName.replace(/\s+/g, '-')
+        dog.name = newDogName
+      }
+    }
 
-/**
- * Fetches a single player from the API.
- * This function should not be doing any rendering
- * @param {number} playerId
- * @returns {Object} the player object
- */
-const fetchSinglePlayer = async (playerId) => {
-  //TODO
-};
-
-/**
- * Adds a new player to the roster via the API.
- * Once a player is added to the database, the new player
- * should appear in the all players page without having to refresh
- * @param {Object} newPlayer the player to add
- */
-/* Note: we need data from our user to be able to add a new player
- * Do we have a way to do that currently...? 
-*/
-/**
- * Note#2: addNewPlayer() expects you to pass in a
- * new player object when you call it. How can we
- * create a new player object and then pass it to addNewPlayer()?
- */
-/**
- * FOR TESTING PURPOSES ONLY PLEASE OBSERVE THIS SECTION
- * @returns {Object} the new player object added to database
- */
-
-const addNewPlayer = async (newPlayer) => {
-  //TODO
-};
-
-/**
- * Removes a player from the roster via the API.
- * Once the player is removed from the database,
- * the player should also be removed from our view without refreshing
- * @param {number} playerId the ID of the player to remove
- */
-/**
- * Note: In order to call removePlayer() some information is required.
- * Unless we get that information, we cannot call removePlayer()....
- */
-/**
- * Note#2: Don't be afraid to add parameters to this function if you need to!
- */
-
-const removePlayer = async (playerId) => {
-  //TODO
-
-};
-
-/**
- * Updates html to display a list of all players or a single player page.
- *
- * If there are no players, a corresponding message is displayed instead.
- *
- * Each player in the all player list is displayed with the following information:
- * - name
- * - id
- * - image (with alt text of the player's name)
- *
- * Additionally, for each player we should be able to:
- * - See details of a single player. When clicked, should be redirected
- *    to a page with the appropriate hashroute. The page should show
- *    specific details about the player clicked 
- * - Remove from roster. when clicked, should remove the player
- *    from the database and our current view without having to refresh
- *
- */
-const render = () => {
-  // TODO
-
-  
-};
-
-/**
- * Updates html to display a single player.
- * A detailed page about the player is displayed with the following information:
- * - name
- * - id
- * - breed
- * - image (with alt text of the player's name)
- * - team name, if the player has one, or "Unassigned"
- *
- * The page also contains a "Back to all players" that, when clicked,
- * will redirect to the approriate hashroute to show all players.
- * The detailed page of the single player should no longer be shown.
- * @param {Object} player an object representing a single player
- */
-const renderSinglePlayer = (player) => {
-  // TODO
-
-};
-
-
-/**
- * Initializes the app by calling render
- * HOWEVER....
- */
-const init = async () => {
-  //Before we render, what do we always need...?
-
-  render();
-
-};
-
-/**THERE IS NO NEED TO EDIT THE CODE BELOW =) **/
-
-// This script will be run using Node when testing, so here we're doing a quick
-// check to see if we're in Node or the browser, and exporting the functions
-// we want to test if we're in Node.
-if (typeof window === "undefined") {
-  module.exports = {
-    fetchAllPlayers,
-    fetchSinglePlayer,
-    addNewPlayer,
-  };
-} else {
-  init();
+    render()
+  } catch (error) {
+    console.error(error)
+  }
 }
+
+// Fetches a single player from the API.
+const fetchSinglePlayer = async (playerId) => {
+  try {
+    const response = await fetch(`${API_URL}/${playerId}`)
+    const data = await response.json()
+    return data.data.player
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+// Adds a new player to the roster via the API.
+const addNewPlayer = async (event) => {
+  event.preventDefault()
+
+  const newPuppy = {
+    name: event.target.name.value.replace(/\s+/g, '-'),
+    breed: event.target.breed.value,
+    status: event.target.status.value,
+    imageUrl: event.target.imageUrl.value,
+    teamId: Number(event.target.teamId.value)
+  }
+
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(newPuppy)
+    })
+    const data = await response.json()
+    puppies.push(data.data.newPlayer)
+
+    // Clear form
+    clearForm()
+
+    // Render
+    render()
+  } catch (error) {
+    console.error(error)
+  }
+}
+addPuppyForm.addEventListener("submit", addNewPlayer)
+
+// Removes a player from the roster via the API.
+const removePlayer = async (event) => {
+  // Only proceed if the delete button was clicked
+  if (event.target.classList.contains("delete-Button")) {
+    const playerId = Number(event.target.id)
+    const playerName = event.target.name
+
+    // Remove from local state
+    puppies = puppies.filter(puppy => puppy.name !== playerName)
+
+    try {
+      const response = await fetch(`${API_URL}/${playerId}`, {
+        method: "DELETE"
+      })
+
+      // Remove DOM element
+      event.target.parentElement.remove()
+    } catch (error) {
+      console.error(error)
+    }
+
+    render()
+  }
+}
+
+// Checks if user confirms deletion
+const checkRemove = (event) => {
+  console.log("!!", event)
+  console.log("Are you sure?")
+  if (confirm("Are you sure?")) {
+    console.log("You pressed OK!")
+    removePlayer(event)
+  } else {
+    console.log("You pressed Cancel!")
+  }
+}
+
+// Clears the add puppy form
+const clearForm = () => {
+  addPuppyForm.name.value = ""
+  addPuppyForm.breed.value = ""
+  addPuppyForm.status.value = ""
+  addPuppyForm.imageUrl.value = ""
+  addPuppyForm.teamId.value = ""
+  document.querySelector("#bench").checked = true
+}
+
+// Renders a single player's detailed card
+const renderSinglePlayer = (player) => {
+  const checkTeam = Number(player.teamId)
+
+  const html = `
+    <div class="singlePlayer">
+      <div class="soloRow1">
+        <img src=${player.imageUrl} />
+      </div>
+      <div class="soloRow2">
+        <h2>Name:</h2>
+        <p>${player.name}</p> 
+        <h2>Breed:</h2>
+        <p>${player.breed}</p> 
+        <h2>Status:</h2>
+        <p>${player.status}</p> 
+        <h2 >TeamId:</h2>
+        <p>${checkTeam <= 0 ? "Unassigned" : checkTeam}</p> 
+        <br/>
+        <a href="#" class="backButton">Back to all Players</a>
+        <br/>
+        <a class="delete-button" onclick="checkRemove(event)" id="${player.id}" name="${player.name}">Delete This Player</a>
+      </div>
+    </div>
+  `
+  return html
+}
+
+// Updates html to display a list of all players OR a single player page.
+const render = () => {
+  const pageName = window.location.hash.slice(1)
+  const singlePlayer = puppies.find(player => player.name === pageName)
+
+  const form = document.querySelector(".formContainer")
+
+  // If viewing single player page
+  if (singlePlayer) {
+    puppiesListDiv.innerHTML = renderSinglePlayer(singlePlayer)
+    form.style.display = "none"
+
+    // Animate single player card
+    gsap.from(".singlePlayer", 0.35, {
+      scale: 0,
+      ease: Back.easeOut,
+      boxShadow: "0px 0px 0px 0px rgba(0, 0, 0, 0)"
+    })
+  } else {
+    // Show all players
+    const allPlayerHTML = puppies.map(puppy => {
+      return `
+        <a href=#${puppy.name}>
+          <div class="playerCard">
+            <img src="${puppy.imageUrl}" />
+            <h3>${puppy.name}</h3>
+          </div> 
+        </a>
+      `
+    })
+
+    puppiesListDiv.innerHTML = allPlayerHTML.join("")
+    form.style.display = "block"
+
+    // Animate player cards
+    gsap.from(".playerCard", 0.35, {
+      scale: 0,
+      y: 300,
+      ease: Back.easeOut,
+      boxShadow: "0px 0px 0px 0px rgba(0, 0, 0, 0)",
+      stagger: 0.05
+    })
+  }
+}
+
+// Initializes the app by calling render
+const init = async () => {
+  console.log("init")
+  await fetchAllPlayers()
+}
+
+init()
